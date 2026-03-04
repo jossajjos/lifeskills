@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Life Skills Lesson Generator</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:white;min-height:100vh}
+
+/* TOP BAR */
+.topbar{background:linear-gradient(135deg,#1a3a5c,#2a7d6f);padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-size:1.05rem;font-weight:700}
+.topbar p{font-size:0.7rem;opacity:0.75;margin-top:2px}
+.top-btns{display:flex;gap:8px}
+.tbtn{padding:8px 16px;border:none;border-radius:7px;font-size:0.8rem;font-weight:700;cursor:pointer}
+.tbtn-gold{background:#c8982a;color:white}
+.tbtn-ghost{background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.25)}
+.tbtn:disabled{opacity:0.35;cursor:not-allowed}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:230px 1fr;height:calc(100vh - 52px)}
+
+/* SIDEBAR */
+.side{background:#111c28;padding:14px 12px;overflow-y:auto;border-right:1px solid #1e3048;display:flex;flex-direction:column;gap:14px}
+.side h3{font-size:0.58rem;text-transform:uppercase;letter-spacing:1.2px;color:#4a7a98;margin-bottom:6px}
+.side label{font-size:0.7rem;color:#8ab0c8;display:block;margin-bottom:2px;font-weight:500}
+.side input,.side textarea{width:100%;padding:6px 9px;border:1px solid #1e3048;border-radius:6px;font-size:0.78rem;background:#0c151f;color:white;outline:none;margin-bottom:6px;font-family:inherit}
+.side input:focus,.side textarea:focus{border-color:#2a7d6f}
+.side textarea{resize:vertical;min-height:48px}
+.side input::placeholder,.side textarea::placeholder{color:#304858}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px}
+.chip{border:1px solid #1e3048;border-radius:5px;padding:5px 5px;cursor:pointer;font-size:0.62rem;color:#508898;background:#0c151f;user-select:none;transition:all 0.12s;line-height:1.3;display:flex;align-items:center;gap:3px}
+.chip.on{border-color:#2a7d6f;background:#0c2018;color:#3dcab0;font-weight:600}
+.prog-box{background:#0c151f;border:1px solid #1e3048;border-radius:7px;padding:9px 10px}
+.prog-title{font-size:0.6rem;color:#4a7a98;font-weight:600;margin-bottom:7px}
+.prog-list{display:flex;flex-direction:column;gap:4px}
+.pi{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:5px;border:1px solid #1e3048;font-size:0.66rem;color:#304858;background:#111c28}
+.pi.done{border-color:#2a7d6f;background:#0c2018;color:#3dcab0}
+.pi.active{border-color:#c8982a;background:#180f00;color:#f0c060}
+.pi-n{width:17px;height:17px;border-radius:4px;background:#1e3048;color:#4a7a98;font-size:0.58rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pi.done .pi-n{background:#2a7d6f;color:white}
+.pi.active .pi-n{background:#c8982a;color:white}
+.btn-gen{width:100%;padding:10px;background:linear-gradient(135deg,#2a7d6f,#1a5060);color:white;border:none;border-radius:7px;font-size:0.82rem;font-weight:700;cursor:pointer;margin-bottom:5px;display:flex;align-items:center;justify-content:center;gap:5px}
+.btn-gen:hover{filter:brightness(1.1)}.btn-gen:disabled{opacity:0.35;cursor:not-allowed}
+.btn-reset{width:100%;padding:7px;background:transparent;color:#4a7a98;border:1px solid #1e3048;border-radius:6px;font-size:0.7rem;font-weight:600;cursor:pointer}
+.btn-reset:hover{color:#3dcab0;border-color:#2a7d6f}
+.st{padding:7px 10px;border-radius:6px;font-size:0.72rem;margin-top:5px;display:none;line-height:1.4}
+.st.info{background:#091e30;color:#60a8d8;border:1px solid #1a4060;display:block}
+.st.ok{background:#08201a;color:#3dcab0;border:1px solid #185840;display:block}
+.st.err{background:#200808;color:#e07070;border:1px solid #501020;display:block}
+
+/* MAIN TV DISPLAY */
+.main{overflow-y:auto;max-height:calc(100vh - 52px);background:#0c151f}
+.empty-state{text-align:center;padding:100px 20px;color:#304858}
+.empty-state .ico{font-size:3.5rem;margin-bottom:16px}
+.empty-state h3{font-size:1.2rem;color:#4a7a98;margin-bottom:8px}
+.empty-state p{font-size:0.9rem;line-height:1.6;max-width:280px;margin:0 auto}
+
+/* TV LESSON CARD */
+.tv-card{padding:48px 60px;border-bottom:3px solid #1e3048;display:flex;flex-direction:column;gap:32px}
+.tv-card:last-child{border-bottom:none}
+
+.tv-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.tv-badge{background:#1a3a5c;color:#7ab8e8;border-radius:8px;padding:7px 18px;font-size:1.1rem;font-weight:700}
+.tv-topic-pill{font-size:1rem;font-weight:700;padding:6px 16px;border-radius:20px}
+.tv-pdf-btn{padding:8px 16px;background:#1e3048;border:1px solid #2e5070;color:#7ab8e8;border-radius:7px;font-size:0.8rem;font-weight:700;cursor:pointer}
+.tv-pdf-btn:hover{background:#2a7d6f;color:white;border-color:#2a7d6f}
+
+.tv-title{font-size:3rem;font-weight:900;color:#ffffff;line-height:1.15;text-align:center;padding:8px 0}
+
+.tv-block{border-radius:16px;padding:28px 36px}
+.tv-block-label{font-size:0.75rem;text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:16px}
+.tv-block p{font-size:1.55rem;color:#d8eaf8;line-height:1.8;margin-bottom:12px}
+.tv-block p:last-child{margin-bottom:0}
+
+.opening-block{background:#131f2b;border-left:6px solid #2a7d6f}
+.opening-block .tv-block-label{color:#4ab8a0}
+
+.story-block{background:#0a1a28;border-left:6px solid #c8982a}
+.story-block .tv-block-label{color:#c8982a}
+.story-name{font-size:1.7rem;font-weight:800;color:#f0c060;margin-bottom:18px}
+.story-block p{color:#c8b898;font-size:1.5rem}
+
+.points-block{background:#131f2b;border-left:6px solid #3dcab0}
+.points-block .tv-block-label{color:#3dcab0}
+.tv-point{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
+.tv-point:last-child{margin-bottom:0}
+.tv-dot{width:13px;height:13px;border-radius:50%;background:#3dcab0;flex-shrink:0;margin-top:12px}
+.tv-point-text{font-size:1.5rem;color:#d8eaf8;line-height:1.65}
+
+.reflect-block{background:#161200;border:2px dashed #c8982a;border-radius:16px;padding:28px 36px}
+.reflect-block .tv-block-label{color:#c8982a}
+.reflect-prompt{font-size:1.6rem;font-style:italic;color:#f0e090;background:#0c0e00;border-left:5px solid #c8982a;border-radius:0 10px 10px 0;padding:18px 24px;line-height:1.65;margin:10px 0}
+.reflect-ex{font-size:1.2rem;color:#a09060;padding:8px 0 8px 18px;border-left:3px solid #806020;margin-top:10px;line-height:1.55}
+
+.takeway-block{background:#091a10;border-left:6px solid #3dcab0}
+.takeway-block .tv-block-label{color:#3dcab0}
+.tw-line{font-size:1.55rem;color:#90d8b8;padding:10px 0;border-bottom:1px solid #1a3028;line-height:1.6}
+.tw-line:last-child{border-bottom:none;padding-bottom:0}
+
+.disc-block{background:#131f2b;border-radius:16px;padding:28px 36px}
+.disc-block .tv-block-label{color:#5a8aa8}
+.disc-q{background:#0c151f;border-radius:10px;padding:18px 22px;margin-bottom:14px}
+.disc-q:last-child{margin-bottom:0}
+.disc-q .q{font-size:1.4rem;font-weight:700;color:#7ab8e8;margin-bottom:8px}
+.disc-q .a{font-size:1.25rem;color:#7a98b0;line-height:1.65}
+
+.closing-block{background:linear-gradient(135deg,#091828,#091810);border:1px solid #284838;border-radius:16px;padding:32px 36px;text-align:center}
+.closing-block p{font-size:1.6rem;font-style:italic;color:#90d8b8;line-height:1.8;margin-bottom:10px}
+.closing-block p:last-child{margin-bottom:0}
+
+/* MEMORY MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#111c28;border-radius:14px;width:90%;max-width:540px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 50px rgba(0,0,0,0.6);border:1px solid #1e3048}
+.modal-head{background:linear-gradient(135deg,#1a3a5c,#2a7d6f);color:white;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:1rem;font-weight:700}
+.modal-head button{background:none;border:none;color:white;font-size:1.3rem;cursor:pointer}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1}
+.mem-week{margin-bottom:14px}
+.mem-week-title{font-size:0.7rem;font-weight:700;color:#7ab8e8;text-transform:uppercase;margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid #1e3048}
+.mem-item{background:#0c151f;border-radius:6px;padding:7px 10px;margin-bottom:4px;font-size:0.73rem;color:#7a98b0;line-height:1.5}
+.mem-item strong{color:#d8eaf8}
+.modal-foot{padding:12px 20px;border-top:1px solid #1e3048;display:flex;justify-content:space-between}
+
+.sp{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:680px){.layout{grid-template-columns:1fr;height:auto}.side{order:2}.main{order:1}.tv-card{padding:20px 16px}.tv-title{font-size:1.8rem}.tv-block p,.story-block p{font-size:1.1rem}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>&#128218; Life Skills Lesson Generator</h1>
+    <p>TV Display Mode &middot; Large Print &middot; Read-Aloud Format</p>
+  </div>
+  <div class="top-btns">
+    <button class="tbtn tbtn-ghost" onclick="openMem()">&#129504; Memory (<span id="memCount">0</span>)</button>
+    <button class="tbtn tbtn-gold" id="emailBtn" onclick="sendEmail()" disabled>&#128140; Email All</button>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="side">
+    <div>
+      <h3>&#128203; Setup</h3>
+      <label>Week Number</label>
+      <input type="number" id="wk" value="4" min="1" max="52" oninput="onWeekChange()"/>
+      <label>Your Email</label>
+      <input type="email" id="em" placeholder="you@example.com"/>
+      <label>Special Focus (optional)</label>
+      <textarea id="si" placeholder="e.g. courage, hope, forgiveness..."></textarea>
+    </div>
+
+    <div>
+      <h3>&#127991; Topics</h3>
+      <div class="tgrid">
+        <div class="chip on" data-t="Health & Wellness" onclick="this.classList.toggle('on')">&#128170; Health</div>
+        <div class="chip on" data-t="Emotional Regulation" onclick="this.classList.toggle('on')">&#129504; Emotions</div>
+        <div class="chip on" data-t="Communication" onclick="this.classList.toggle('on')">&#128483; Talk</div>
+        <div class="chip on" data-t="Goal Setting & Growth" onclick="this.classList.toggle('on')">&#127807; Growth</div>
+        <div class="chip on" data-t="Mental Health & Inner Peace" onclick="this.classList.toggle('on')">&#128153; Peace</div>
+        <div class="chip on" data-t="Self-Worth & Identity" onclick="this.classList.toggle('on')">&#129710; Self-Worth</div>
+        <div class="chip on" data-t="Resilience & Strength" onclick="this.classList.toggle('on')">&#128293; Strength</div>
+        <div class="chip on" data-t="Purpose & Meaning" onclick="this.classList.toggle('on')">&#128154; Purpose</div>
+        <div class="chip on" data-t="Practical Life Skills" onclick="this.classList.toggle('on')">&#128736; Skills</div>
+        <div class="chip on" data-t="Kindness & Community" onclick="this.classList.toggle('on')">&#10084; Kindness</div>
+      </div>
+    </div>
+
+    <div>
+      <h3>&#9889; Generate</h3>
+      <div class="prog-box">
+        <div class="prog-title">Week <span id="wkLabel">4</span> &mdash; Progress</div>
+        <div class="prog-list" id="progList"></div>
+      </div>
+      <br/>
+      <button class="btn-gen" id="genBtn" onclick="generateNext()">&#10024; Generate Lesson 1</button>
+      <button class="btn-reset" onclick="resetWeek()">&#8635; Reset Week</button>
+      <div id="sideMsg" class="st"></div>
+    </div>
+  </div>
+
+  <!-- MAIN TV DISPLAY -->
+  <div class="main" id="mainArea">
+    <div class="empty-state">
+      <div class="ico">&#128250;</div>
+      <h3>TV Display Ready</h3>
+      <p>Large print &mdash; easy to read from across the room.<br/>Click Generate to begin.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MEMORY MODAL -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeMem()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>&#129504; Lesson Memory &mdash; Past Lessons</h3>
+      <button onclick="closeMem()">&#10005;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button style="padding:7px 14px;background:#200808;color:#e07070;border:1px solid #501020;border-radius:7px;font-size:0.75rem;font-weight:600;cursor:pointer" onclick="clearMem()">&#128465; Clear Memory</button>
+      <button style="padding:7px 14px;background:#1a3a5c;color:white;border:none;border-radius:7px;font-size:0.75rem;font-weight:600;cursor:pointer" onclick="closeMem()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// PDF via browser print
+let LL = [], W = 4, next = 1;
+
+const TC = {
+  'Health':'#2a7d6f','Emotional':'#6a3d9f','Communication':'#b5451b',
+  'Goal':'#2a6496','Mental':'#1a6b8a','Self-Worth':'#7a3f1e',
+  'Resilience':'#b84a00','Purpose':'#3d6b44','Practical':'#556600','Kindness':'#8b1a4a'
+};
+const BG = {
+  'Health':'#eaf6f3','Emotional':'#f3eefa','Communication':'#fdf0eb',
+  'Goal':'#ebf3fa','Mental':'#e4f4fa','Self-Worth':'#fdf0e8',
+  'Resilience':'#fff0e4','Purpose':'#eaf4ec','Practical':'#f5f5e0','Kindness':'#fdeaf2'
+};
+function gc(t){
+  const k = Object.keys(TC).find(k => t.includes(k)) || 'Health';
+  return {f: TC[k]||'#1a3a5c', b: BG[k]||'#eef2f7'};
+}
+function msg(id,c,m){const e=document.getElementById(id);e.className='st '+c;e.innerHTML=m;}
+function lbl(n){return 'Week '+W+' \u2013 Lesson '+n;}
+
+function buildTracker(){
+  document.getElementById('wkLabel').textContent = W;
+  let html = '';
+  for(let i=1;i<=5;i++){
+    const cls = i<next?'done':i===next&&next<=5?'active':'';
+    const icon = i<next?'&#10003;':i===next&&next<=5?'&#9654;':'&middot;';
+    html += '<div class="pi '+cls+'"><div class="pi-n">'+icon+'</div><span>'+lbl(i)+'</span></div>';
+  }
+  document.getElementById('progList').innerHTML = html;
+  const btn = document.getElementById('genBtn');
+  if(next>5){ btn.disabled=true; btn.innerHTML='&#10003; Week '+W+' Complete!'; }
+  else { btn.disabled=false; btn.innerHTML='&#10024; Generate '+lbl(next); }
+}
+
+function onWeekChange(){
+  const w = parseInt(document.getElementById('wk').value);
+  if(w !== W){ W=w; LL=[]; next=1; document.getElementById('emailBtn').disabled=true; render(); buildTracker(); }
+}
+function resetWeek(){
+  W = parseInt(document.getElementById('wk').value);
+  LL=[]; next=1;
+  document.getElementById('emailBtn').disabled=true;
+  msg('sideMsg','info','Ready for '+lbl(1));
+  render(); buildTracker();
+}
+
+// ── MEMORY ──────────────────────────────────────────
+const MKEY = 'lifeskills-tv-v2';
+async function loadMem(){ try{const r=await window.storage.get(MKEY);return r?JSON.parse(r.value):[]}catch(e){return [];} }
+async function saveMem(d){ try{await window.storage.set(MKEY,JSON.stringify(d));}catch(e){} }
+async function saveWeek(){
+  const m = await loadMem();
+  const f = m.filter(e=>e.week!=W);
+  f.push({week:W, date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    lessons:LL.map(l=>({n:l.n,lbl:l.lbl,title:l.title,topic:l.topicTag,story:l.storyTitle,full:l}))});
+  f.sort((a,b)=>a.week-b.week);
+  await saveMem(f.slice(-20));
+  refreshCount(f);
+}
+async function refreshCount(m){ if(!m)m=await loadMem(); document.getElementById('memCount').textContent=m.reduce((s,e)=>s+e.lessons.length,0); }
+function memNote(m){
+  if(!m||!m.length) return '';
+  const lines=['PAST LESSONS \u2014 do NOT repeat any titles, stories, or topic sequences:'];
+  m.forEach(e=>{ lines.push('\nWeek '+e.week+':'); e.lessons.forEach(l=>lines.push('  '+l.lbl+': "'+l.title+'" | '+l.topic+' | Story: "'+l.story+'"')); });
+  return lines.join('\n');
+}
+
+// ── AI CALL ──────────────────────────────────────────
+async function callAI(prompt){
+  const r = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
+  const d = await r.json();
+  if(d.error) throw new Error(d.error.message);
+  const raw = d.content.map(i=>i.text||'').join('');
+  const match = raw.match(/\{[\s\S]*\}/);
+  if(!match) throw new Error('Could not read lesson \u2014 please try again.');
+  return JSON.parse(match[0]);
+}
+
+function makePrompt(n, topics, si, mNote, usedTopics){
+  return `You are writing a short, powerful life skills lesson to display on a TV screen and read aloud to a group of adults facing hard times. Every word must be hopeful, dignified, and easy to read from across the room.
+
+STRICT RULES \u2014 NEVER mention or reference:
+- Prison, jail, cells, bars, guards, sentences, parole, or any facility
+- Family separation, missing children, or absent loved ones
+- Crime, past mistakes, courts, or legal situations  
+- Death, funerals, or grief
+- Addiction or substance abuse
+- Do NOT use "I", "me", "as a nurse", or any first-person narrator voice
+
+ALWAYS:
+- Write in third person for stories \u2014 fictional characters only, like timeless folk tales
+- Use "you" and "we" when speaking to the audience
+- Keep every word warm, hopeful, and focused on inner strength and human dignity
+- Write for an 8th grade reading level
+
+KEEP IT SHORT \u2014 TV SCREEN FORMAT:
+- intro: 2 paragraphs, 2-3 sentences each \u2014 speak warmly and directly to the listeners
+- story: a short 3-paragraph parable with a clear lesson (2-3 sentences each)
+- lessonPoints: exactly 3 short punchy lines, one sentence each
+- activityPrompt: one sentence starting with "Today I choose..." or "One strength I have is..."
+- activityExamples: 2 examples only, one sentence each
+- takeaway: exactly 2 powerful short lines
+- discussion: 2 questions only, with brief warm answers
+- closing: 2 warm, uplifting sentences
+
+This is "${lbl(n)}" \u2014 lesson ${n} of 5 for Week ${W}.
+Choose ONE topic from: ${topics.join(', ')}
+Topics already used this week (choose something different): ${usedTopics||'none yet'}
+${si?'Special focus: '+si:''}
+${mNote?'\n'+mNote:''}
+
+Respond ONLY with a single valid JSON object \u2014 no markdown, no extra text:
+{"title":"<short powerful title, 3-6 words>","topicTag":"<chosen topic>","intro":["<p1>","<p2>"],"storyTitle":"<story name>","story":["<p1>","<p2>","<p3>"],"lessonPoints":["<1>","<2>","<3>"],"activityTitle":"<short title>","activityPrompt":"<Today I...>","activityExamples":["<1>","<2>"],"takeaway":["<line1>","<line2>"],"discussion":[{"q":"<question>","a":"<answer>"},{"q":"<question>","a":"<answer>"}],"closing":["<line1>","<line2>"]}`;
+}
+
+// ── GENERATE ──────────────────────────────────────────
+async function generateNext(){
+  const newW = parseInt(document.getElementById('wk').value);
+  if(newW !== W){ W=newW; LL=[]; next=1; render(); buildTracker(); }
+  if(next > 5) return;
+
+  const topics = [...document.querySelectorAll('.chip.on')].map(e=>e.dataset.t);
+  const si = document.getElementById('si').value.trim();
+  if(!topics.length){ msg('sideMsg','err','Pick at least one topic.'); return; }
+
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="sp"></span> Writing '+lbl(next)+'...';
+  msg('sideMsg','info','Writing '+lbl(next)+' \u2014 about 15 seconds...');
+
+  const mem = await loadMem();
+  const usedTopics = LL.map(l=>l.topicTag).join(', ');
+
+  try {
+    const data = await callAI(makePrompt(next, topics, si, memNote(mem), usedTopics));
+    data.n = next; data.lbl = lbl(next);
+    LL.push(data); next++;
+    render(); buildTracker();
+    await saveWeek();
+    // Scroll to new lesson and pulse its PDF button
+    setTimeout(()=>{
+      const cards = document.querySelectorAll('.tv-card');
+      const card = cards[cards.length-1];
+      if(card){
+        card.scrollIntoView({behavior:'smooth',block:'start'});
+        const btn = card.querySelector('.tv-pdf-btn');
+        if(btn){
+          btn.style.transition='all 0.3s';
+          btn.style.background='#2a7d6f';
+          btn.style.color='white';
+          btn.style.transform='scale(1.15)';
+          btn.textContent='Email Lesson Now!';
+          setTimeout(()=>{btn.style.transform='scale(1)';},600);
+        }
+      }
+    },400);
+    if(next > 5){
+      msg('sideMsg','ok','&#10003; All 5 done! Click Save PDF on each lesson.');
+      document.getElementById('emailBtn').disabled = false;
+    } else {
+      msg('sideMsg','ok','&#10003; '+data.lbl+' ready! Save the PDF below, then generate '+lbl(next)+'.');
+    }
+  } catch(e) {
+    msg('sideMsg','err','Error: '+e.message);
+    buildTracker();
+  }
+}
+
+// ── RENDER ──────────────────────────────────────────
+function cardHTML(l){
+  const {f,b} = gc(l.topicTag);
+  return '<div class="tv-card">'+
+    '<div class="tv-top">'+
+      '<div class="tv-badge">'+l.lbl+'</div>'+
+      '<span class="tv-topic-pill" style="color:'+f+';background:'+b+'">'+l.topicTag+'</span>'+
+      '<button class="tv-pdf-btn dl-btn" data-n="'+l.n+'">&#8595; Download Lesson</button>'+
+    '</div>'+
+    '<div class="tv-title">'+l.title+'</div>'+
+
+    '<div class="tv-block opening-block">'+
+      '<div class="tv-block-label">Opening</div>'+
+      l.intro.map(p=>'<p>'+p+'</p>').join('')+
+    '</div>'+
+
+    '<div class="story-block tv-block">'+
+      '<div class="tv-block-label">Story</div>'+
+      '<div class="story-name">'+l.storyTitle+'</div>'+
+      l.story.map(p=>'<p>'+p+'</p>').join('')+
+    '</div>'+
+
+    '<div class="tv-block points-block">'+
+      '<div class="tv-block-label">What This Teaches Us</div>'+
+      l.lessonPoints.map(p=>'<div class="tv-point"><div class="tv-dot"></div><span class="tv-point-text">'+p+'</span></div>').join('')+
+    '</div>'+
+
+    '<div class="reflect-block">'+
+      '<div class="tv-block-label">&#127775; Reflection &mdash; '+l.activityTitle+'</div>'+
+      '<div class="reflect-prompt">&#8220;'+l.activityPrompt+'&#8221;</div>'+
+      l.activityExamples.map(e=>'<div class="reflect-ex">'+e+'</div>').join('')+
+    '</div>'+
+
+    '<div class="tv-block takeway-block">'+
+      '<div class="tv-block-label">Take This With You</div>'+
+      l.takeaway.map(t=>'<div class="tw-line">'+t+'</div>').join('')+
+    '</div>'+
+
+    '<div class="disc-block">'+
+      '<div class="tv-block-label">&#128172; Group Discussion</div>'+
+      l.discussion.map(d=>'<div class="disc-q"><div class="q">'+d.q+'</div><div class="a">'+d.a+'</div></div>').join('')+
+    '</div>'+
+
+    '<div class="closing-block">'+
+      l.closing.map(c=>'<p>'+c+'</p>').join('')+
+    '</div>'+
+  '</div>';
+}
+
+function render(){
+  document.getElementById('mainArea').innerHTML = LL.length
+    ? LL.map(cardHTML).join('')
+    : '<div class="empty-state"><div class="ico">&#128250;</div><h3>TV Display Ready</h3><p>Large print \u2014 easy to read from across the room.<br/>Click Generate to begin.</p></div>';
+}
+
+document.addEventListener('click', function(e){
+  if(e.target.classList.contains('dl-btn')){
+    var n = parseInt(e.target.getAttribute('data-n'));
+    downloadLesson(n);
+  }
+});
+
+// ── EMAIL SINGLE LESSON ──────────────────────────────
+function downloadLesson(n){
+  var l = LL.find(function(x){return x.n===n;});
+  if(!l) return;
+  openPrintTab(l);
+}
+function dlMemLesson(ld){ openPrintTab(ld); }
+
+function openPrintTab(l){
+  var w = window.open('','_blank');
+  if(!w){ msg('sideMsg','err','Popup blocked. Allow popups for this site then try again.'); return; }
+  var h = buildPrintHTML(l);
+  w.document.open();
+  w.document.write(h);
+  w.document.close();
+}
+
+function buildPrintHTML(l){
+  function sec(title, color, body){
+    return '<div style="margin-bottom:18px;border-radius:8px;overflow:hidden">'
+      + '<div style="background:'+color+';color:white;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:8px 16px">'+title+'</div>'
+      + '<div style="padding:16px 20px;background:#f8f9fb;font-size:15px;line-height:1.8;color:#333">'+body+'</div>'
+      + '</div>';
+  }
+  var intro = l.intro.map(function(p){return '<p style="margin-bottom:10px">'+p+'</p>';}).join('');
+  var story = '<p style="font-size:16px;font-weight:700;color:#b5791a;margin-bottom:10px">'+l.storyTitle+'</p>'
+    + l.story.map(function(p){return '<p style="margin-bottom:10px">'+p+'</p>';}).join('');
+  var pts = l.lessonPoints.map(function(p){
+    return '<div style="display:flex;gap:10px;margin-bottom:8px"><b style="color:#2a7d6f">&#8226;</b><span>'+p+'</span></div>';
+  }).join('');
+  var act = '<p style="font-style:italic;border-left:4px solid #b5791a;padding:10px 14px;background:#fffbf2;margin:8px 0;color:#1a3a5c">"'+l.activityPrompt+'"</p>'
+    + l.activityExamples.map(function(e){
+      return '<div style="display:flex;gap:10px;margin-bottom:8px"><b style="color:#2a7d6f">&#8226;</b><span>'+e+'</span></div>';
+    }).join('');
+  var tw = l.takeaway.map(function(t){return '<p style="margin-bottom:10px">'+t+'</p>';}).join('');
+  var disc = l.discussion.map(function(d){
+    return '<div style="background:#eef2f7;border-radius:6px;padding:12px 16px;margin-bottom:10px">'
+      + '<p style="font-weight:700;color:#1a3a5c;margin-bottom:4px">'+d.q+'</p>'
+      + '<p>'+d.a+'</p></div>';
+  }).join('');
+  var clo = l.closing.map(function(c){return '<p style="margin-bottom:6px">'+c+'</p>';}).join('');
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    + '<title>'+l.lbl+'</title>'
+    + '<style>'
+    + 'body{font-family:Segoe UI,Arial,sans-serif;max-width:780px;margin:0 auto;padding:32px 48px;color:#222}'
+    + '.no-print{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding:12px 16px;background:#e8f5f0;border-radius:8px;border:2px solid #2a7d6f}'
+    + '.pbtn{padding:10px 28px;background:#2a7d6f;color:white;border:none;border-radius:7px;font-size:15px;font-weight:700;cursor:pointer}'
+    + '.cbtn{padding:8px 18px;background:#555;color:white;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer}'
+    + '@media print{.no-print{display:none}@page{margin:1.2cm}}'
+    + '</style></head><body>'
+    + '<div class="no-print">'
+    + '<button class="cbtn" onclick="window.close()">Close</button>'
+    + '<button class="pbtn" onclick="window.print()">Print / Save as PDF</button>'
+    + '</div>'
+    + '<div style="background:#1a3a5c;color:white;padding:18px 24px;border-radius:10px;margin-bottom:24px;text-align:center">'
+    + '<div style="font-size:11px;letter-spacing:1px;opacity:0.8;margin-bottom:6px">'+l.lbl.toUpperCase()+'</div>'
+    + '<div style="font-size:28px;font-weight:900;margin-bottom:4px">'+l.title+'</div>'
+    + '<div style="font-size:13px;opacity:0.75">'+l.topicTag+'</div>'
+    + '</div>'
+    + sec('Opening', '#2a7d6f', intro)
+    + sec('Story: '+l.storyTitle, '#1a3a5c', story)
+    + sec('What This Teaches Us', '#2a7d6f', pts)
+    + sec('Reflection - '+l.activityTitle, '#b5791a', act)
+    + sec('Take This With You', '#1a3a5c', tw)
+    + sec('Discussion', '#2a7d6f', disc)
+    + '<div style="text-align:center;font-style:italic;color:#2a7d6f;padding:16px;border:1px solid #2a7d6f;border-radius:8px;background:#f0f9f6">'+clo+'</div>'
+    + '<div style="margin-top:24px;text-align:center;font-size:11px;color:#bbb;border-top:1px solid #eee;padding-top:10px">Life Skills Program - For Internal Use Only</div>'
+    + '</body></html>';
+}
+
+// ── EMAIL ──────────────────────────────────────────────
+function fmtLesson(l){
+  const x=[];
+  x.push(l.lbl.toUpperCase()+': '+l.title, 'Topic: '+l.topicTag,'');
+  x.push('OPENING','---'); l.intro.forEach(p=>{x.push(p,'');});
+  x.push('STORY: '+l.storyTitle,'---'); l.story.forEach(p=>{x.push(p,'');});
+  x.push('WHAT THIS TEACHES US','---'); l.lessonPoints.forEach(p=>x.push('* '+p)); x.push('');
+  x.push('REFLECTION: '+l.activityTitle,'---', '"'+l.activityPrompt+'"'); l.activityExamples.forEach(e=>x.push('* '+e)); x.push('');
+  x.push('TAKE THIS WITH YOU','---'); l.takeaway.forEach(t=>x.push(t)); x.push('');
+  x.push('DISCUSSION','---'); l.discussion.forEach(d=>{x.push('Q: '+d.q, 'A: '+d.a,'');});
+  x.push('CLOSING','---'); l.closing.forEach(c=>x.push(c)); x.push('','='.repeat(50));
+  return x.join('\n');
+}
+async function sendEmail(){
+  const email = document.getElementById('em').value.trim();
+  if(!email||!email.includes('@')){ msg('sideMsg','err','Enter a valid email address.'); return; }
+  if(!LL.length){ msg('sideMsg','err','Generate lessons first.'); return; }
+  const btn = document.getElementById('emailBtn');
+  btn.disabled=true; btn.innerHTML='<span class="sp"></span> Sending...';
+  msg('sideMsg','info','Sending to '+email+'...');
+  const body = 'Week '+W+' Life Skills Lessons\n\n'+
+    LL.map(l=>l.lbl+': '+l.title+' \u2014 '+l.topicTag).join('\n')+
+    '\n\n'+'='.repeat(50)+'\n\n'+LL.map(fmtLesson).join('\n\n')+'\n\nLife Skills Program';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:'Send via Gmail:\nTO: '+email+'\nSUBJECT: Week '+W+' Life Skills Lessons\nBODY:\n'+body}],
+        mcp_servers:[{type:'url',url:'https://gmail.mcp.claude.com/mcp',name:'gmail-mcp'}]})});
+    const d=await r.json();
+    if(d.error) throw new Error(d.error.message);
+    msg('sideMsg','ok','Sent to '+email+'!');
+  }catch(e){ msg('sideMsg','err','Error: '+e.message); }
+  btn.disabled=false; btn.innerHTML='&#128140; Email All';
+}
+
+// ── MEMORY MODAL ───────────────────────────────────────
+async function openMem(){
+  const m = await loadMem();
+  const b = document.getElementById('modalBody');
+  if(!m.length){
+    b.innerHTML='<div style="text-align:center;padding:36px;color:#4a7a98;font-size:0.9rem">No lessons saved yet.<br/>Complete a week to start tracking!</div>';
+  } else {
+    b.innerHTML = [...m].sort((a,b)=>b.week-a.week).map(e=>
+      '<div class="mem-week"><div class="mem-week-title">Week '+e.week+' \u00b7 '+e.date+'</div>'+
+      e.lessons.map(l=>
+        '<div class="mem-item" style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
+          '<div><strong>'+l.lbl+':</strong> \u201c'+l.title+'\u201d \u00b7 '+l.topic+'</div>'+
+          (l.full ? '<button onclick=\'dlMemLesson('+JSON.stringify(l.full).replace(/'/g,"&#39;")+')\' style="flex-shrink:0;padding:4px 10px;background:#2a7d6f;color:white;border:none;border-radius:5px;font-size:0.68rem;font-weight:700;cursor:pointer">&#8595; Save</button>' : '')+
+        '</div>'
+      ).join('')+
+      '</div>'
+    ).join('');
+  }
+  document.getElementById('modalBg').classList.add('open');
+}
+function closeMem(){ document.getElementById('modalBg').classList.remove('open'); }
+async function clearMem(){
+  if(!confirm('Clear all memory? The AI will no longer avoid past lessons.')) return;
+  try{ await window.storage.delete(MKEY); }catch(e){}
+  document.getElementById('memCount').textContent = '0';
+  closeMem();
+}
+
+// ── INIT ──────────────────────────────────────────────
+refreshCount(); buildTracker();
+</script>
+</body>
+</html>
