@@ -139,7 +139,7 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:white;min-height
   </div>
   <div class="top-btns">
     <button class="tbtn tbtn-ghost" onclick="openMem()">&#129504; Memory (<span id="memCount">0</span>)</button>
-    <button class="tbtn tbtn-gold" id="emailBtn" onclick="sendEmail()" disabled>&#8595; Download All PDFs</button>
+    <button class="tbtn tbtn-gold" id="emailBtn" onclick="sendEmail()">&#8595; Download All PDFs</button>
   </div>
 </div>
 
@@ -251,12 +251,12 @@ function buildTracker(){
 
 function onWeekChange(){
   const w = parseInt(document.getElementById('wk').value);
-  if(w !== W){ W=w; LL=[]; next=1; document.getElementById('emailBtn').disabled=true; render(); buildTracker(); }
+  if(w !== W){ W=w; LL=[]; next=1; document.getElementById('emailBtn').disabled=false; render(); buildTracker(); }
 }
 function resetWeek(){
   W = parseInt(document.getElementById('wk').value);
   LL=[]; next=1;
-  document.getElementById('emailBtn').disabled=true;
+  document.getElementById('emailBtn').disabled=false;
   msg('sideMsg','info','Ready for '+lbl(1));
   render(); buildTracker();
 }
@@ -353,7 +353,11 @@ function makePrompt(n, topics, si, mNote, usedTopics){
     +'- Third-person stories only - fictional characters, timeless folk tales\n'
     +'- Speak to audience with you and we\n'
     +'- Warm, hopeful, focused on inner strength and dignity\n'
-    +'- 8th grade reading level\n\n'
+    +'- Write like you are telling a story to a friend around a campfire\n'
+    +'- Use plain simple everyday words - NO fancy vocabulary, NO complex sentences\n'
+    +'- Short sentences. Simple words. Real emotions. Easy to follow.\n'
+    +'- 5th grade reading level - anyone should be able to follow along easily\n'
+    +'- Characters feel like real people with real feelings, not literary heroes\n\n'
     +'STORY REQUIREMENTS - CRITICAL FOR VARIETY:\n'
     +'- Set this story in: '+setting+'\n'
     +'- Main character: '+character+'\n'
@@ -422,7 +426,7 @@ if(!topics.length){ msg('sideMsg','err','Pick at least one topic.'); return; }
     },400);
     if(next > 5){
       msg('sideMsg','ok','&#10003; All 5 done! Click Save PDF on each lesson.');
-      document.getElementById('emailBtn').disabled = false;
+      document.getElementById('emailBtn').disabled=false;
     } else {
       msg('sideMsg','ok','&#10003; '+data.lbl+' ready! Save the PDF below, then generate '+lbl(next)+'.');
     }
@@ -563,9 +567,11 @@ function downloadLesson(n){
 }
 
 function sendEmail(){
-  if(!LL.length){ msg('sideMsg','err','Generate lessons first.'); return; }
-  LL.forEach(function(l){ openPrintWindow(l); });
-  msg('sideMsg','ok','Opened all '+LL.length+' lessons - save each as PDF!');
+  if(!LL.length){ msg('sideMsg','err','Generate at least one lesson first.'); return; }
+  LL.forEach(function(l, i){
+    setTimeout(function(){ openPrintWindow(l); }, i * 600);
+  });
+  msg('sideMsg','ok','Opening '+LL.length+' lesson(s) - save each as PDF using Ctrl+P or Cmd+P!');
 }
 
 
