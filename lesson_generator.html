@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!-- v2.1 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -420,7 +420,7 @@ if(!topics.length){ msg('sideMsg','err','Pick at least one topic.'); return; }
           btn.style.background='#2a7d6f';
           btn.style.color='white';
           btn.style.transform='scale(1.15)';
-          btn.textContent='Email Lesson Now!';
+          btn.textContent='Save as PDF';
           setTimeout(()=>{btn.style.transform='scale(1)';},600);
         }
       }
@@ -534,7 +534,7 @@ function buildPrintHTML(l){
   }).join('');
   var clo = l.closing.map(function(c){return '<p style="margin-bottom:6px">'+c+'</p>';}).join('');
   var fname = 'Week'+W+'_Lesson'+l.n+'_'+l.topicTag.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
-  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+fname+'</title>'
+  return '<!DOCTYPE html><!-- v2.1 --><html><head><meta charset="UTF-8"><title>'+fname+'</title>'
     +'<style>'
     +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
     +'body{font-family:Segoe UI,Arial,sans-serif;max-width:780px;margin:0 auto;padding:32px 48px;color:#222}'
