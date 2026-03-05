@@ -139,7 +139,7 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:white;min-height
   </div>
   <div class="top-btns">
     <button class="tbtn tbtn-ghost" onclick="openMem()">&#129504; Memory (<span id="memCount">0</span>)</button>
-    <button class="tbtn tbtn-gold" id="emailBtn" onclick="sendEmail()" disabled>&#128140; Email All</button>
+    <button class="tbtn tbtn-gold" id="emailBtn" onclick="sendEmail()" disabled>&#8595; Download All PDFs</button>
   </div>
 </div>
 
@@ -169,6 +169,10 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:white;min-height
         <div class="chip on" data-t="Purpose & Meaning" onclick="this.classList.toggle('on')">&#128154; Purpose</div>
         <div class="chip on" data-t="Practical Life Skills" onclick="this.classList.toggle('on')">&#128736; Skills</div>
         <div class="chip on" data-t="Kindness & Community" onclick="this.classList.toggle('on')">&#10084; Kindness</div>
+        <div class="chip on" data-t="Life Skills" onclick="this.classList.toggle('on')">&#127775; Life Skills</div>
+        <div class="chip on" data-t="Daily Living Skills" onclick="this.classList.toggle('on')">&#127968; Daily Living</div>
+        <div class="chip on" data-t="Therapeutic Activities" onclick="this.classList.toggle('on')">&#129717; Therapy</div>
+        <div class="chip on" data-t="Medication Management" onclick="this.classList.toggle('on')">&#128138; Medication</div>
       </div>
     </div>
 
@@ -290,41 +294,89 @@ async function callAI(prompt){
   return JSON.parse(match[0]);
 }
 
+// Story variety pools - 100 settings, 50 characters
+var STORY_SETTINGS = [
+  'a mountain village','a busy marketplace','a fishing boat at sea','a desert oasis',
+  'a small town school','a hospital ward','a bakery','a forest path',
+  'a harbor town','a farm at harvest time','a city rooftop garden','a lighthouse',
+  'a train journey','a library','a river crossing','a workshop','a music hall',
+  'a traveling circus','a ship crossing the ocean','a canyon trail',
+  'a night market','a pottery studio','a tea plantation','an island village',
+  'a snowy mountain pass','a vineyard at sunset','a river delta','a coral reef village',
+  'a silk road trading post','a jungle clearing','a frozen tundra camp','a rice paddy',
+  'a windmill on the plains','a cave by the sea','a floating market','a wool mill',
+  'a beehive farm','a salt flat','a bamboo forest','a cobblestone alleyway',
+  'a cathedral courtyard','a waterfall pool','a mesa top','a chalk cliff',
+  'a mangrove swamp','a stone bridge','a hilltop monastery','a sunflower field',
+  'a copper mine','a river ferry crossing','a tide pool beach','a mud brick town',
+  'a caravan resting place','a fig orchard','a thatched roof inn','a frozen lake',
+  'a volcano slope','a winding canyon road','a flower market','a grain mill',
+  'a shepherd pasture at dawn','a swamp boardwalk','a kelp forest shore',
+  'a clock tower square','a lantern festival','a harvest moon celebration',
+  'a weaving village','a maple sugar forest','a canyon dwelling','a river mouth delta',
+  'a high plateau farm','a seaside fish market','a date palm oasis','a glacier edge',
+  'a terraced hillside garden','a forest watermill','a stone quarry','a bird sanctuary',
+  'a trading ship deck','a mountain hot spring','a meadow at dawn','a fruit orchard',
+  'a kelp harvesting boat','a canyon monastery','a tidal island','a marsh village',
+  'a spinning mill','a silkworm farm','a riverside laundry','a harbor lighthouse',
+  'a jungle river camp','a highland cattle farm','a coastal salt marsh',
+  'a mountain apothecary','a river boat kitchen','a prairie homestead',
+  'a stargazing hilltop','a forest mushroom farm','a cliffside garden',
+  'a floating reed island','a steppe nomad camp','a harbor repair dock'
+];
+var STORY_CHARACTERS = [
+  'an elderly woman','a young boy','a tired farmer','a blind musician',
+  'a street vendor','a new teacher','a retired soldier','a young mother',
+  'a fisherman','a blacksmith','a wandering healer','a child shepherd',
+  'a weaver','a cook','a mapmaker','a young apprentice','an innkeeper',
+  'a stonecutter','a clockmaker','a traveling merchant',
+  'a midwife','a ferryman','a glassblower','a candlemaker','a dyer of cloth',
+  'a cartographer','a herbalist','a well digger','a rope maker','a tanner',
+  'a bell ringer','a night watchman','a salt collector','a miller','a beekeeper',
+  'a seed keeper','a rain catcher','a fire tender','a tide reader','a star counter',
+  'a letter carrier','a wool comber','a river guide','a bread baker','a lantern maker',
+  'a shadow puppet maker','a sand artist','a kite maker','a soap boiler','a tile setter'
+];
+
 function makePrompt(n, topics, si, mNote, usedTopics){
-  return `You are writing a short, powerful life skills lesson to display on a TV screen and read aloud to a group of adults facing hard times. Every word must be hopeful, dignified, and easy to read from across the room.
-
-STRICT RULES \u2014 NEVER mention or reference:
-- Prison, jail, cells, bars, guards, sentences, parole, or any facility
-- Family separation, missing children, or absent loved ones
-- Crime, past mistakes, courts, or legal situations  
-- Death, funerals, or grief
-- Addiction or substance abuse
-- Do NOT use "I", "me", "as a nurse", or any first-person narrator voice
-
-ALWAYS:
-- Write in third person for stories \u2014 fictional characters only, like timeless folk tales
-- Use "you" and "we" when speaking to the audience
-- Keep every word warm, hopeful, and focused on inner strength and human dignity
-- Write for an 8th grade reading level
-
-KEEP IT SHORT \u2014 TV SCREEN FORMAT:
-- intro: 2 paragraphs, 2-3 sentences each \u2014 speak warmly and directly to the listeners
-- story: a short 3-paragraph parable with a clear lesson (2-3 sentences each)
-- lessonPoints: exactly 3 short punchy lines, one sentence each
-- activityPrompt: one sentence starting with "Today I choose..." or "One strength I have is..."
-- activityExamples: 2 examples only, one sentence each
-- takeaway: exactly 2 powerful short lines
-- discussion: 2 questions only, with brief warm answers
-- closing: 2 warm, uplifting sentences
-
-This is "${lbl(n)}" \u2014 lesson ${n} of 5 for Week ${W}.
-Choose ONE topic from: ${topics.join(', ')}
-Topics already used this week (choose something different): ${usedTopics||'none yet'}
-${si?'Special focus: '+si:''}
-${mNote?'\n'+mNote:''}
-
-Respond ONLY with a single valid JSON object \u2014 no markdown, no extra text:
-{"title":"<short powerful title, 3-6 words>","topicTag":"<chosen topic>","intro":["<p1>","<p2>"],"storyTitle":"<story name>","story":["<p1>","<p2>","<p3>"],"lessonPoints":["<1>","<2>","<3>"],"activityTitle":"<short title>","activityPrompt":"<Today I...>","activityExamples":["<1>","<2>"],"takeaway":["<line1>","<line2>"],"discussion":[{"q":"<question>","a":"<answer>"},{"q":"<question>","a":"<answer>"}],"closing":["<line1>","<line2>"]}`;
+  var setting = STORY_SETTINGS[Math.floor(Math.random()*STORY_SETTINGS.length)];
+  var character = STORY_CHARACTERS[Math.floor(Math.random()*STORY_CHARACTERS.length)];
+  return 'You are writing a powerful life skills lesson for a TV screen, read aloud to adults facing hard times. Every word must be hopeful, dignified, and meaningful.\n\n'
+    +'STRICT RULES - NEVER mention:\n'
+    +'- Prison, jail, cells, bars, guards, sentences, parole, or any facility\n'
+    +'- Family separation, missing children, or absent loved ones\n'
+    +'- Crime, past mistakes, courts, or legal situations\n'
+    +'- Death, funerals, or grief\n'
+    +'- Addiction or substance abuse\n'
+    +'- I, me, as a nurse, or any first-person narrator\n\n'
+    +'ALWAYS:\n'
+    +'- Third-person stories only - fictional characters, timeless folk tales\n'
+    +'- Speak to audience with you and we\n'
+    +'- Warm, hopeful, focused on inner strength and dignity\n'
+    +'- 8th grade reading level\n\n'
+    +'STORY REQUIREMENTS - CRITICAL FOR VARIETY:\n'
+    +'- Set this story in: '+setting+'\n'
+    +'- Main character: '+character+'\n'
+    +'- NEVER repeat a setting or character type from past lessons\n'
+    +'- Make it rich and vivid - 4 paragraphs, 3-4 sentences each\n'
+    +'- Clear beginning, middle, and satisfying ending\n'
+    +'- Use sensory details - what the character sees, hears, feels\n\n'
+    +'FORMAT:\n'
+    +'- intro: 2 paragraphs, 2-3 sentences each\n'
+    +'- story: exactly 4 paragraphs, 3-4 sentences each - rich and complete\n'
+    +'- lessonPoints: exactly 3 one-sentence lines\n'
+    +'- activityPrompt: one sentence starting with Today I choose... or One strength I have is...\n'
+    +'- activityExamples: 2 examples only\n'
+    +'- takeaway: exactly 2 short powerful lines\n'
+    +'- discussion: 2 questions with brief warm answers\n'
+    +'- closing: 2 warm sentences\n\n'
+    +'This is "'+lbl(n)+'" - lesson '+n+' of 5 for Week '+W+'.\n'
+    +'Choose ONE topic from: '+[...topics].join(', ')+'\n'
+    +'Already used this week: '+(usedTopics||'none yet')+'\n'
+    +(si ? 'Special focus: '+si+'\n' : '')
+    +(mNote ? '\n'+mNote+'\n' : '')
+    +'\nRespond ONLY with valid JSON, no markdown:\n'
+    +'{"title":"<3-6 word title>","topicTag":"<topic>","intro":["<p1>","<p2>"],"storyTitle":"<name>","story":["<p1>","<p2>","<p3>","<p4>"],"lessonPoints":["<1>","<2>","<3>"],"activityTitle":"<short title>","activityPrompt":"<Today I...>","activityExamples":["<1>","<2>"],"takeaway":["<line1>","<line2>"],"discussion":[{"q":"<q>","a":"<a>"},{"q":"<q>","a":"<a>"}],"closing":["<line1>","<line2>"]}';
 }
 
 // ── GENERATE ──────────────────────────────────────────
@@ -387,7 +439,7 @@ function cardHTML(l){
     '<div class="tv-top">'+
       '<div class="tv-badge">'+l.lbl+'</div>'+
       '<span class="tv-topic-pill" style="color:'+f+';background:'+b+'">'+l.topicTag+'</span>'+
-      '<button class="tv-pdf-btn dl-btn" data-n="'+l.n+'">&#8595; Download Lesson</button>'+
+      '<button class="tv-pdf-btn dl-btn" data-n="'+l.n+'">&#8595; Save as PDF</button>'+
     '</div>'+
     '<div class="tv-title">'+l.title+'</div>'+
 
@@ -438,80 +490,84 @@ function render(){
 document.addEventListener('click', function(e){
   if(e.target.classList.contains('dl-btn')){
     var n = parseInt(e.target.getAttribute('data-n'));
-    downloadLesson(n);
+    var l = LL.find(function(x){return x.n===n;});
+    if(!l) return;
+    openPrintWindow(l);
   }
 });
 
 // ── EMAIL SINGLE LESSON ──────────────────────────────
-function downloadLesson(n){
-  var l = LL.find(function(x){return x.n===n;});
-  if(!l) return;
-  openPrintTab(l);
-}
-function dlMemLesson(ld){ openPrintTab(ld); }
-
-function openPrintTab(l){
-  var w = window.open('','_blank');
-  if(!w){ msg('sideMsg','err','Popup blocked. Allow popups for this site then try again.'); return; }
-  var h = buildPrintHTML(l);
-  w.document.open();
-  w.document.write(h);
+function openPrintWindow(l){
+  var w = window.open('', '_blank');
+  if(!w){ alert('Please allow popups for this site, then try again.'); return; }
+  w.document.write(buildPrintHTML(l));
   w.document.close();
 }
 
 function buildPrintHTML(l){
   function sec(title, color, body){
     return '<div style="margin-bottom:18px;border-radius:8px;overflow:hidden">'
-      + '<div style="background:'+color+';color:white;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:8px 16px">'+title+'</div>'
-      + '<div style="padding:16px 20px;background:#f8f9fb;font-size:15px;line-height:1.8;color:#333">'+body+'</div>'
-      + '</div>';
+      +'<div style="background:'+color+';color:white;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:8px 16px">'+title+'</div>'
+      +'<div style="padding:16px 20px;background:#f8f9fb;font-size:15px;line-height:1.8;color:#333">'+body+'</div>'
+      +'</div>';
   }
   var intro = l.intro.map(function(p){return '<p style="margin-bottom:10px">'+p+'</p>';}).join('');
   var story = '<p style="font-size:16px;font-weight:700;color:#b5791a;margin-bottom:10px">'+l.storyTitle+'</p>'
-    + l.story.map(function(p){return '<p style="margin-bottom:10px">'+p+'</p>';}).join('');
+    +l.story.map(function(p){return '<p style="margin-bottom:10px">'+p+'</p>';}).join('');
   var pts = l.lessonPoints.map(function(p){
     return '<div style="display:flex;gap:10px;margin-bottom:8px"><b style="color:#2a7d6f">&#8226;</b><span>'+p+'</span></div>';
   }).join('');
   var act = '<p style="font-style:italic;border-left:4px solid #b5791a;padding:10px 14px;background:#fffbf2;margin:8px 0;color:#1a3a5c">"'+l.activityPrompt+'"</p>'
-    + l.activityExamples.map(function(e){
+    +l.activityExamples.map(function(e){
       return '<div style="display:flex;gap:10px;margin-bottom:8px"><b style="color:#2a7d6f">&#8226;</b><span>'+e+'</span></div>';
     }).join('');
   var tw = l.takeaway.map(function(t){return '<p style="margin-bottom:10px">'+t+'</p>';}).join('');
   var disc = l.discussion.map(function(d){
     return '<div style="background:#eef2f7;border-radius:6px;padding:12px 16px;margin-bottom:10px">'
-      + '<p style="font-weight:700;color:#1a3a5c;margin-bottom:4px">'+d.q+'</p>'
-      + '<p>'+d.a+'</p></div>';
+      +'<p style="font-weight:700;color:#1a3a5c;margin-bottom:4px">'+d.q+'</p>'
+      +'<p>'+d.a+'</p></div>';
   }).join('');
   var clo = l.closing.map(function(c){return '<p style="margin-bottom:6px">'+c+'</p>';}).join('');
-
-  return '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    + '<title>'+l.lbl+'</title>'
-    + '<style>'
-    + 'body{font-family:Segoe UI,Arial,sans-serif;max-width:780px;margin:0 auto;padding:32px 48px;color:#222}'
-    + '.no-print{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding:12px 16px;background:#e8f5f0;border-radius:8px;border:2px solid #2a7d6f}'
-    + '.pbtn{padding:10px 28px;background:#2a7d6f;color:white;border:none;border-radius:7px;font-size:15px;font-weight:700;cursor:pointer}'
-    + '.cbtn{padding:8px 18px;background:#555;color:white;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer}'
-    + '@media print{.no-print{display:none}@page{margin:1.2cm}}'
-    + '</style></head><body>'
-    + '<div class="no-print">'
-    + '<button class="cbtn" onclick="window.close()">Close</button>'
-    + '<button class="pbtn" onclick="window.print()">Print / Save as PDF</button>'
-    + '</div>'
-    + '<div style="background:#1a3a5c;color:white;padding:18px 24px;border-radius:10px;margin-bottom:24px;text-align:center">'
-    + '<div style="font-size:11px;letter-spacing:1px;opacity:0.8;margin-bottom:6px">'+l.lbl.toUpperCase()+'</div>'
-    + '<div style="font-size:28px;font-weight:900;margin-bottom:4px">'+l.title+'</div>'
-    + '<div style="font-size:13px;opacity:0.75">'+l.topicTag+'</div>'
-    + '</div>'
-    + sec('Opening', '#2a7d6f', intro)
-    + sec('Story: '+l.storyTitle, '#1a3a5c', story)
-    + sec('What This Teaches Us', '#2a7d6f', pts)
-    + sec('Reflection - '+l.activityTitle, '#b5791a', act)
-    + sec('Take This With You', '#1a3a5c', tw)
-    + sec('Discussion', '#2a7d6f', disc)
-    + '<div style="text-align:center;font-style:italic;color:#2a7d6f;padding:16px;border:1px solid #2a7d6f;border-radius:8px;background:#f0f9f6">'+clo+'</div>'
-    + '<div style="margin-top:24px;text-align:center;font-size:11px;color:#bbb;border-top:1px solid #eee;padding-top:10px">Life Skills Program - For Internal Use Only</div>'
-    + '</body></html>';
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+l.lbl+'</title>'
+    +'<style>'
+    +'body{font-family:Segoe UI,Arial,sans-serif;max-width:780px;margin:0 auto;padding:32px 48px;color:#222}'
+    +'@media print{.noprint{display:none}@page{margin:1.2cm}}'
+    +'button{padding:10px 24px;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer}'
+    +'</style></head><body>'
+    +'<div class="noprint" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding:12px 16px;background:#e8f5f0;border-radius:8px;border:2px solid #2a7d6f">'
+    +'<button onclick="window.close()" style="background:#555;color:white">Close</button>'
+    +'<div style="font-size:14px;color:#1a3a5c;font-weight:600">Click your browser menu or press <b>Ctrl+P</b> / <b>Cmd+P</b> then choose <b>Save as PDF</b></div>'
+    +'<button onclick="window.print()" style="background:#2a7d6f;color:white">Print / Save PDF</button>'
+    +'</div>'
+    +'<div style="background:#1a3a5c;color:white;padding:18px 24px;border-radius:10px;margin-bottom:24px;text-align:center">'
+    +'<div style="font-size:11px;letter-spacing:1px;opacity:0.8;margin-bottom:6px">'+l.lbl.toUpperCase()+'</div>'
+    +'<div style="font-size:28px;font-weight:900;margin-bottom:4px">'+l.title+'</div>'
+    +'<div style="font-size:13px;opacity:0.75">'+l.topicTag+'</div>'
+    +'</div>'
+    +sec('Opening','#2a7d6f',intro)
+    +sec('Story: '+l.storyTitle,'#1a3a5c',story)
+    +sec('What This Teaches Us','#2a7d6f',pts)
+    +sec('Reflection - '+l.activityTitle,'#b5791a',act)
+    +sec('Take This With You','#1a3a5c',tw)
+    +sec('Discussion','#2a7d6f',disc)
+    +'<div style="text-align:center;font-style:italic;color:#2a7d6f;padding:16px;border:1px solid #2a7d6f;border-radius:8px;background:#f0f9f6">'+clo+'</div>'
+    +'<div style="margin-top:24px;text-align:center;font-size:11px;color:#bbb;border-top:1px solid #eee;padding-top:10px">Life Skills Program - For Internal Use Only</div>'
+    +'</body></html>';
 }
+
+function dlMemLesson(ld){ openPrintWindow(ld); }
+
+function downloadLesson(n){
+  var l = LL.find(function(x){return x.n===n;});
+  if(l) openPrintWindow(l);
+}
+
+function sendEmail(){
+  if(!LL.length){ msg('sideMsg','err','Generate lessons first.'); return; }
+  LL.forEach(function(l){ openPrintWindow(l); });
+  msg('sideMsg','ok','Opened all '+LL.length+' lessons - save each as PDF!');
+}
+
 
 // ── EMAIL ──────────────────────────────────────────────
 function fmtLesson(l){
@@ -526,26 +582,23 @@ function fmtLesson(l){
   x.push('CLOSING','---'); l.closing.forEach(c=>x.push(c)); x.push('','='.repeat(50));
   return x.join('\n');
 }
-async function sendEmail(){
-  const email = document.getElementById('em').value.trim();
-  if(!email||!email.includes('@')){ msg('sideMsg','err','Enter a valid email address.'); return; }
+function sendEmail(){
   if(!LL.length){ msg('sideMsg','err','Generate lessons first.'); return; }
-  const btn = document.getElementById('emailBtn');
-  btn.disabled=true; btn.innerHTML='<span class="sp"></span> Sending...';
-  msg('sideMsg','info','Sending to '+email+'...');
-  const body = 'Week '+W+' Life Skills Lessons\n\n'+
-    LL.map(l=>l.lbl+': '+l.title+' \u2014 '+l.topicTag).join('\n')+
-    '\n\n'+'='.repeat(50)+'\n\n'+LL.map(fmtLesson).join('\n\n')+'\n\nLife Skills Program';
-  try{
-    const r=await fetch('https://lifeskills.sajanjos.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
-        messages:[{role:'user',content:'Send via Gmail:\nTO: '+email+'\nSUBJECT: Week '+W+' Life Skills Lessons\nBODY:\n'+body}],
-        mcp_servers:[{type:'url',url:'https://gmail.mcp.claude.com/mcp',name:'gmail-mcp'}]})});
-    const d=await r.json();
-    if(d.error) throw new Error(d.error.message);
-    msg('sideMsg','ok','Sent to '+email+'!');
-  }catch(e){ msg('sideMsg','err','Error: '+e.message); }
-  btn.disabled=false; btn.innerHTML='&#128140; Email All';
+  var text = 'Week '+W+' Life Skills Lessons\n'
+    + new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
+    + '\n\n'
+    + LL.map(function(l){return l.lbl+': '+l.title+' - '+l.topicTag;}).join('\n')
+    + '\n\n'+'='.repeat(60)+'\n\n'
+    + LL.map(fmtLesson).join('\n\n')
+    + '\n\nLife Skills Program - For Internal Use Only';
+  var a = document.createElement('a');
+  a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+  a.download = 'Week_'+W+'_Life_Skills_Lessons.txt';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  msg('sideMsg','ok','Week '+W+' - all 5 lessons downloaded!');
 }
 
 // ── MEMORY MODAL ───────────────────────────────────────
