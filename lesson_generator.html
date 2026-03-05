@@ -152,8 +152,6 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:white;min-height
       <input type="number" id="wk" value="4" min="1" max="52" oninput="onWeekChange()"/>
       <label>Your Email</label>
       <input type="email" id="em" placeholder="you@example.com"/>
-      <label>Anthropic API Key</label>
-      <input type="password" id="apiKey" placeholder="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" style="font-family:monospace"/>
       <label>Special Focus (optional)</label>
       <textarea id="si" placeholder="e.g. courage, hope, forgiveness..."></textarea>
     </div>
@@ -282,7 +280,7 @@ function memNote(m){
 
 // ── AI CALL ──────────────────────────────────────────
 async function callAI(prompt){
-  const r = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':(document.getElementById('apiKey')||{value:''}).value.trim(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  const r = await fetch('https://lifeskills.sajanjos.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
   const d = await r.json();
   if(d.error) throw new Error(d.error.message);
@@ -337,9 +335,7 @@ async function generateNext(){
 
   const topics = [...document.querySelectorAll('.chip.on')].map(e=>e.dataset.t);
   const si = document.getElementById('si').value.trim();
-  const apiKey = document.getElementById('apiKey').value.trim();
-  if(!apiKey || !apiKey.startsWith('sk-')){ msg('sideMsg','err','Enter your Anthropic API key above (starts with sk-ant-).'); return; }
-  if(!topics.length){ msg('sideMsg','err','Pick at least one topic.'); return; }
+if(!topics.length){ msg('sideMsg','err','Pick at least one topic.'); return; }
 
   const btn = document.getElementById('genBtn');
   btn.disabled = true;
@@ -541,7 +537,7 @@ async function sendEmail(){
     LL.map(l=>l.lbl+': '+l.title+' \u2014 '+l.topicTag).join('\n')+
     '\n\n'+'='.repeat(50)+'\n\n'+LL.map(fmtLesson).join('\n\n')+'\n\nLife Skills Program';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':(document.getElementById('apiKey')||{value:''}).value.trim(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    const r=await fetch('https://lifeskills.sajanjos.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
         messages:[{role:'user',content:'Send via Gmail:\nTO: '+email+'\nSUBJECT: Week '+W+' Life Skills Lessons\nBODY:\n'+body}],
         mcp_servers:[{type:'url',url:'https://gmail.mcp.claude.com/mcp',name:'gmail-mcp'}]})});
