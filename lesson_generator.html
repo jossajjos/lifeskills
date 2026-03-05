@@ -405,6 +405,7 @@ if(!topics.length){ msg('sideMsg','err','Pick at least one topic.'); return; }
     const data = await callAI(makePrompt(next, topics, si, memNote(mem), usedTopics));
     data.n = next; data.lbl = lbl(next);
     LL.push(data); next++;
+    document.getElementById('emailBtn').disabled=false;
     render(); buildTracker();
     await saveWeek();
     // Scroll to new lesson and pulse its PDF button
@@ -538,9 +539,9 @@ function buildPrintHTML(l){
     +'@media print{.noprint{display:none}@page{margin:1.2cm}}'
     +'button{padding:10px 24px;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer}'
     +'</style></head><body>'
-    +'<div class="noprint" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding:12px 16px;background:#e8f5f0;border-radius:8px;border:2px solid #2a7d6f">'
+    +'<div class="noprint" style="display:flex;justify-content:center;gap:16px;align-items:center;margin-bottom:24px;padding:12px 16px;background:#e8f5f0;border-radius:8px;border:2px solid #2a7d6f">'
     +'<button onclick="window.close()" style="background:#555;color:white">Close</button>'
-    +'<div style="font-size:14px;color:#1a3a5c;font-weight:600">Click your browser menu or press <b>Ctrl+P</b> / <b>Cmd+P</b> then choose <b>Save as PDF</b></div>'
+    +''
     +'<button onclick="window.print()" style="background:#2a7d6f;color:white">Print / Save PDF</button>'
     +'</div>'
     +'<div style="background:#1a3a5c;color:white;padding:18px 24px;border-radius:10px;margin-bottom:24px;text-align:center">'
