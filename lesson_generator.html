@@ -507,9 +507,6 @@ function openPrintWindow(l){
   if(!w){ alert('Please allow popups for this site, then try again.'); return; }
   w.document.write(buildPrintHTML(l));
   w.document.close();
-  // Set the tab title to filename so print dialog suggests correct filename
-  var fname = 'Week'+W+'_Lesson'+l.n+'_'+l.topicTag.replace(/[^a-zA-Z0-9]/g,'_');
-  try{ w.document.title = fname; } catch(e){}
 }
 
 function buildPrintHTML(l){
@@ -547,13 +544,14 @@ function buildPrintHTML(l){
     +'body{padding:10px 20px}'
     +'}'
     +'button{padding:10px 24px;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer}'
-    +'</style></head><body>'
+    +'</style>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</head><body>'
     +'<div class="noprint" style="display:flex;flex-direction:column;gap:10px;align-items:center;margin-bottom:24px;padding:14px 16px;background:#e8f5f0;border-radius:8px;border:2px solid #2a7d6f">'
     +'<button onclick="window.close()" style="background:#555;color:white">Close</button>'
     +''
     +'<button onclick="window.print()" style="background:#2a7d6f;color:white">Print / Save PDF</button>'
     +'</div>'
-    +'<div class="noprint" style="text-align:center;font-size:12px;color:#666;margin-bottom:16px;padding:8px 12px;background:#fff8e1;border-radius:6px;border:1px solid #f0c040"><b>Tip:</b> In the print dialog, turn on <b>Background graphics</b> to keep all colors</div>'
     +'<div style="background:#1a3a5c;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:white;padding:18px 24px;border-radius:10px;margin-bottom:24px;text-align:center">'
     +'<div style="font-size:11px;letter-spacing:1px;opacity:0.8;margin-bottom:6px">'+l.lbl.toUpperCase()+'</div>'
     +'<div style="font-size:28px;font-weight:900;margin-bottom:4px">'+l.title+'</div>'
@@ -582,7 +580,7 @@ function sendEmail(){
   LL.forEach(function(l, i){
     setTimeout(function(){ openPrintWindow(l); }, i * 600);
   });
-  msg('sideMsg','ok','Opening '+LL.length+' lesson(s) - save each as PDF using Ctrl+P or Cmd+P!');
+  msg('sideMsg','ok','Opening '+LL.length+' lesson(s) as PDF - save each one!');
 }
 
 
