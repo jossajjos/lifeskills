@@ -290,6 +290,7 @@ function _collectUsedFromMem(mem){
   const usedSettings = new Set();
   const usedCharacters = new Set();
   const usedNames = new Set();
+  const usedStoryTitles = new Set();
   try{
     (mem||[]).forEach(w=>{
       (w.lessons||[]).forEach(l=>{
@@ -297,11 +298,12 @@ function _collectUsedFromMem(mem){
           if(l.full.setting) usedSettings.add(_normKey(l.full.setting));
           if(l.full.character) usedCharacters.add(_normKey(l.full.character));
           if(l.full.characterName) usedNames.add(_normKey(l.full.characterName));
+          if(l.full.storyTitle) usedStoryTitles.add(_normKey(l.full.storyTitle));
         }
       });
     });
   } catch(e){}
-  return {usedSettings, usedCharacters, usedNames};
+  return {usedSettings, usedCharacters, usedNames, usedStoryTitles};
 }
 
 function _pickFresh(pool, usedSet, fallbackLabel){
@@ -396,7 +398,31 @@ var NAME_POOLS = [
    'Omar','Karim','Samir','Idris','Tariq','Rami','Adil','Hassan','Zayd','Yusuf','Faris','Salim','Nabil','Hadi','Amir','Malik','Khalil','Naser','Bilal','Amin']
 ];
 
-function makePrompt(n, topics, si, mNote, usedTopics, setting, character, characterName){
+var TITLE_ADJ = [
+  'Quiet','Brave','Gentle','Steady','New','Small','Bright','Patient','Simple','Open','Clear','Kind','Honest','Strong','Calm','Warm','Ready','True','Wise','Fresh',
+  'Hidden','Growing','Golden','Silver','Soft','Deep','Bold','Light','Safe','Early','Late','Lucky','Humble','Peaceful','Willing','Careful','Tender','Focused','Hopeful','Grateful'
+];
+var TITLE_NOUN = [
+  'Promise','Path','Lantern','Bridge','Harbor','Garden','Note','Map','Knot','Thread','River','Stone','Window','Key','Seed','Song','Cup','Market','Fire','Shelter',
+  'Compass','Morning','Footstep','Bench','Gate','Trail','Candle','Canvas','Circle','Pocket','Letter','Wave','Skyline','Horizon','Basket','Repair','Practice','Choice','Courage','Rest'
+];
+
+function _makeStoryTitle(usedStoryTitles){
+  const maxTries = 80;
+  for(let i=0;i<maxTries;i++){
+    const t = TITLE_ADJ[Math.floor(Math.random()*TITLE_ADJ.length)] + ' ' + TITLE_NOUN[Math.floor(Math.random()*TITLE_NOUN.length)];
+    const k = _normKey(t);
+    if(!usedStoryTitles.has(k)){
+      usedStoryTitles.add(k);
+      return t;
+    }
+  }
+  const t = 'Quiet Promise';
+  usedStoryTitles.add(_normKey(t));
+  return t;
+}
+
+function makePrompt(n, topics, si, mNote, usedTopics, setting, character, characterName, storyTitle){
   return 'You are writing a powerful life skills lesson for a TV screen, read aloud to adults facing hard times. Every word must be hopeful, dignified, and meaningful.\n\n'
     +'STRICT RULES - NEVER mention:\n'
     +'- Prison, jail, cells, bars, guards, sentences, parole, or any facility\n'
@@ -418,6 +444,7 @@ function makePrompt(n, topics, si, mNote, usedTopics, setting, character, charac
     +'- Story setting (must use exactly, do not change): '+setting+'\n'
     +'- Main character (must use exactly, do not change): '+character+'\n'
     +'- Main character name (must use exactly, do not change): '+characterName+'\n'
+    +'- Story title (must use exactly, do not change): '+storyTitle+'\n'
     +'- The story MUST clearly take place in that setting and follow that main character\n'
     +'- NEVER repeat a setting or character from past lessons\n'
     +'- Make it rich and vivid - 4 paragraphs, 3-4 sentences each\n'
@@ -438,7 +465,7 @@ function makePrompt(n, topics, si, mNote, usedTopics, setting, character, charac
     +(si ? 'Special focus: '+si+'\n' : '')
     +(mNote ? '\n'+mNote+'\n' : '')
     +'\nRespond ONLY with valid JSON, no markdown:\n'
-    +'{"title":"<3-6 word title>","topicTag":"<topic>","intro":["<p1>","<p2>"],"storyTitle":"<name>","story":["<p1>","<p2>","<p3>","<p4>"],"lessonPoints":["<1>","<2>","<3>"],"activityTitle":"<short title>","activityPrompt":"<Today I...>","activityExamples":["<1>","<2>"],"takeaway":["<line1>","<line2>"],"discussion":[{"q":"<q>","a":"<a>"},{"q":"<q>","a":"<a>"}],"closing":["<line1>","<line2>"]}';
+    +'{"title":"<3-6 word title>","topicTag":"<topic>","intro":["<p1>","<p2>"],"storyTitle":"'+storyTitle+'","story":["<p1>","<p2>","<p3>","<p4>"],"lessonPoints":["<1>","<2>","<3>"],"activityTitle":"<short title>","activityPrompt":"<Today I...>","activityExamples":["<1>","<2>"],"takeaway":["<line1>","<line2>"],"discussion":[{"q":"<q>","a":"<a>"},{"q":"<q>","a":"<a>"}],"closing":["<line1>","<line2>"]}';
 }
 
 // ── GENERATE ──────────────────────────────────────────
@@ -463,23 +490,27 @@ if(!topics.length){ msg('sideMsg','err','Pick at least one topic.'); return; }
   const usedSettings = used.usedSettings;
   const usedCharacters = used.usedCharacters;
   const usedNames = used.usedNames;
+  const usedStoryTitles = used.usedStoryTitles;
   try{
     LL.forEach(l=>{
       if(l && l.setting) usedSettings.add(_normKey(l.setting));
       if(l && l.character) usedCharacters.add(_normKey(l.character));
       if(l && l.characterName) usedNames.add(_normKey(l.characterName));
+      if(l && l.storyTitle) usedStoryTitles.add(_normKey(l.storyTitle));
     });
   } catch(e){}
   const setting = _pickFresh(STORY_SETTINGS, usedSettings, 'a small town');
   const character = _pickFresh(STORY_CHARACTERS, usedCharacters, 'a kind neighbor');
   const namePool = NAME_POOLS[Math.floor(Math.random()*NAME_POOLS.length)] || [];
   const characterName = _pickFresh(namePool, usedNames, 'Avery');
+  const storyTitle = _makeStoryTitle(usedStoryTitles);
 
   try {
-    const data = await callAI(makePrompt(next, topics, si, memNote(mem), usedTopics, setting, character, characterName));
+    const data = await callAI(makePrompt(next, topics, si, memNote(mem), usedTopics, setting, character, characterName, storyTitle));
     data.setting = setting;
     data.character = character;
     data.characterName = characterName;
+    data.storyTitle = storyTitle;
     data.n = next; data.lbl = lbl(next);
     LL.push(data); next++;
     document.getElementById('emailBtn').disabled=false;
