@@ -375,13 +375,25 @@ var STORY_CHARACTERS = [
   'a shadow puppet maker','a sand artist','a kite maker','a soap boiler','a tile setter'
 ];
 
-var NAME_POOL = [
-  'Asha','Nia','Zuri','Imani','Amara','Kemi','Sade','Talia','Liora','Mina','Samira','Leila','Noura','Aya','Hana','Yara','Dina','Rina','Sana','Noor',
-  'Anika','Priya','Meera','Kavya','Isha','Riya','Sanya','Aditi','Neha','Pooja','Tara','Anya','Veda','Diya','Nandini','Aarohi','Ira','Sita','Maya','Rhea',
-  'Elena','Sofia','Lucia','Carmen','Ines','Marisol','Alma','Clara','Eva','Nora','Ivy','Hazel','Willow','Juniper','Rowan','Sky','Dove','Wren','Sadie','Eloise',
-  'Omar','Yusuf','Zayd','Hassan','Karim','Samir','Idris','Amin','Bilal','Rami','Tariq','Nabil','Faris','Salim','Adil','Malik','Amir','Khalil','Naser','Hadi',
-  'Arjun','Kiran','Rohan','Dev','Ayaan','Ishan','Nikhil','Rahul','Vikram','Sameer','Sahil','Avi','Neil','Aditya','Kabir','Jai','Ravi','Suresh','Manu','Gopal',
-  'Mateo','Diego','Luis','Javier','Rafael','Nico','Hugo','Pablo','Marco','Enzo','Theo','Milo','Felix','Jonah','Eli','Caleb','Isaac','Noah','Ethan','Adam'
+var NAME_POOLS = [
+  // US/UK common
+  ['Ava','Mia','Emma','Olivia','Sophia','Isla','Ella','Grace','Chloe','Hannah','Lily','Nora','Violet','Hazel','Ivy','Eloise','Ruby','Lucy','Sadie','Stella',
+   'Liam','Noah','Oliver','Elijah','James','William','Benjamin','Lucas','Henry','Jack','Leo','Theodore','Mason','Ethan','Daniel','Caleb','Owen','Wyatt','Nathan','Adam'],
+  // Spanish/Portuguese
+  ['Sofia','Lucia','Valeria','Camila','Daniela','Isabella','Martina','Elena','Alma','Clara','Eva','Noa','Paula','Julia','Carmen','Ines','Marina','Sara','Lola','Vera',
+   'Mateo','Diego','Lucas','Hugo','Martin','Leo','Daniel','Alejandro','Santiago','Adrian','Javier','Rafael','Nico','Pablo','Marco','Enzo','Bruno','Luis','Carlos','Felipe'],
+  // Indian (mixed)
+  ['Anaya','Aditi','Diya','Isha','Kavya','Meera','Nandini','Neha','Riya','Sanya','Tara','Anika','Ira','Veda','Pooja','Rhea','Priya','Maya','Aarohi','Kiran',
+   'Arjun','Rohan','Dev','Ishan','Kabir','Jai','Neil','Rahul','Vikram','Sahil','Avi','Aditya','Kunal','Ravi','Sameer','Manu','Gopal','Suresh','Nikhil','Ayaan'],
+  // African diaspora (mixed)
+  ['Asha','Amara','Imani','Zuri','Nia','Kemi','Sade','Ayana','Jada','Zara','Amina','Layla','Mina','Aaliyah','Nala','Tia','Keira','Malia','Nadine','Selah',
+   'Malik','Jamal','Darius','Kofi','Amir','Zaire','Elijah','Miles','Isaiah','Andre','Devin','Jordan','Noah','Caleb','Micah','Jaden','Marcus','Julian','Damon','Cyrus'],
+  // East Asian (romanized)
+  ['Mei','Lin','Xia','Yuna','Hana','Sora','Aiko','Mina','Rin','Aya','Nari','Jisoo','Sumi','Keiko','Yuri','Momo','Hyejin','Nozomi','Sana','Yui',
+   'Kenji','Hiro','Taro','Ren','Kaito','Sota','Minho','Joon','Taeyang','Yuto','Haruto','Jin','Daichi','Riku','Shin','Jun','Hao','Kai','Eiji','Sung'],
+  // Middle East (mixed)
+  ['Leila','Noor','Mariam','Yara','Dina','Rana','Noura','Aya','Hana','Rina','Sana','Salma','Lina','Maha','Farah','Nadia','Amal','Yasmin','Huda','Rania',
+   'Omar','Karim','Samir','Idris','Tariq','Rami','Adil','Hassan','Zayd','Yusuf','Faris','Salim','Nabil','Hadi','Amir','Malik','Khalil','Naser','Bilal','Amin']
 ];
 
 function makePrompt(n, topics, si, mNote, usedTopics, setting, character, characterName){
@@ -460,7 +472,8 @@ if(!topics.length){ msg('sideMsg','err','Pick at least one topic.'); return; }
   } catch(e){}
   const setting = _pickFresh(STORY_SETTINGS, usedSettings, 'a small town');
   const character = _pickFresh(STORY_CHARACTERS, usedCharacters, 'a kind neighbor');
-  const characterName = _pickFresh(NAME_POOL, usedNames, 'Avery');
+  const namePool = NAME_POOLS[Math.floor(Math.random()*NAME_POOLS.length)] || [];
+  const characterName = _pickFresh(namePool, usedNames, 'Avery');
 
   try {
     const data = await callAI(makePrompt(next, topics, si, memNote(mem), usedTopics, setting, character, characterName));
