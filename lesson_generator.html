@@ -263,8 +263,8 @@ function resetWeek(){
 
 // ── MEMORY ──────────────────────────────────────────
 const MKEY = 'lifeskills-tv-v2';
-async function loadMem(){ try{const r=await window.storage.get(MKEY);return r?JSON.parse(r.value):[]}catch(e){return [];} }
-async function saveMem(d){ try{await window.storage.set(MKEY,JSON.stringify(d));}catch(e){} }
+async function loadMem(){ try{const v=localStorage.getItem(MKEY);return v?JSON.parse(v):[]}catch(e){return [];} }
+async function saveMem(d){ try{localStorage.setItem(MKEY,JSON.stringify(d));}catch(e){} }
 async function saveWeek(){
   const m = await loadMem();
   const f = m.filter(e=>e.week!=W);
@@ -280,6 +280,41 @@ function memNote(m){
   const lines=['PAST LESSONS \u2014 do NOT repeat any titles, stories, or topic sequences:'];
   m.forEach(e=>{ lines.push('\nWeek '+e.week+':'); e.lessons.forEach(l=>lines.push('  '+l.lbl+': "'+l.title+'" | '+l.topic+' | Story: "'+l.story+'"')); });
   return lines.join('\n');
+}
+
+function _normKey(s){
+  return String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+}
+
+function _collectUsedFromMem(mem){
+  const usedSettings = new Set();
+  const usedCharacters = new Set();
+  try{
+    (mem||[]).forEach(w=>{
+      (w.lessons||[]).forEach(l=>{
+        if(l && l.full){
+          if(l.full.setting) usedSettings.add(_normKey(l.full.setting));
+          if(l.full.character) usedCharacters.add(_normKey(l.full.character));
+        }
+      });
+    });
+  } catch(e){}
+  return {usedSettings, usedCharacters};
+}
+
+function _pickFresh(pool, usedSet, fallbackLabel){
+  const maxTries = 50;
+  for(let i=0;i<maxTries;i++){
+    const v = pool[Math.floor(Math.random()*pool.length)];
+    const k = _normKey(v);
+    if(v && !usedSet.has(k)){
+      usedSet.add(k);
+      return v;
+    }
+  }
+  const v = pool[Math.floor(Math.random()*pool.length)] || fallbackLabel;
+  usedSet.add(_normKey(v));
+  return v;
 }
 
 // ── AI CALL ──────────────────────────────────────────
@@ -338,9 +373,7 @@ var STORY_CHARACTERS = [
   'a shadow puppet maker','a sand artist','a kite maker','a soap boiler','a tile setter'
 ];
 
-function makePrompt(n, topics, si, mNote, usedTopics){
-  var setting = STORY_SETTINGS[Math.floor(Math.random()*STORY_SETTINGS.length)];
-  var character = STORY_CHARACTERS[Math.floor(Math.random()*STORY_CHARACTERS.length)];
+function makePrompt(n, topics, si, mNote, usedTopics, setting, character){
   return 'You are writing a powerful life skills lesson for a TV screen, read aloud to adults facing hard times. Every word must be hopeful, dignified, and meaningful.\n\n'
     +'STRICT RULES - NEVER mention:\n'
     +'- Prison, jail, cells, bars, guards, sentences, parole, or any facility\n'
@@ -359,9 +392,10 @@ function makePrompt(n, topics, si, mNote, usedTopics){
     +'- 5th grade reading level - anyone should be able to follow along easily\n'
     +'- Characters feel like real people with real feelings, not literary heroes\n\n'
     +'STORY REQUIREMENTS - CRITICAL FOR VARIETY:\n'
-    +'- Set this story in: '+setting+'\n'
-    +'- Main character: '+character+'\n'
-    +'- NEVER repeat a setting or character type from past lessons\n'
+    +'- Story setting (must use exactly, do not change): '+setting+'\n'
+    +'- Main character (must use exactly, do not change): '+character+'\n'
+    +'- The story MUST clearly take place in that setting and follow that main character\n'
+    +'- NEVER repeat a setting or character from past lessons\n'
     +'- Make it rich and vivid - 4 paragraphs, 3-4 sentences each\n'
     +'- Clear beginning, middle, and satisfying ending\n'
     +'- Use sensory details - what the character sees, hears, feels\n\n'
@@ -401,8 +435,22 @@ if(!topics.length){ msg('sideMsg','err','Pick at least one topic.'); return; }
   const mem = await loadMem();
   const usedTopics = LL.map(l=>l.topicTag).join(', ');
 
+  const used = _collectUsedFromMem(mem);
+  const usedSettings = used.usedSettings;
+  const usedCharacters = used.usedCharacters;
+  try{
+    LL.forEach(l=>{
+      if(l && l.setting) usedSettings.add(_normKey(l.setting));
+      if(l && l.character) usedCharacters.add(_normKey(l.character));
+    });
+  } catch(e){}
+  const setting = _pickFresh(STORY_SETTINGS, usedSettings, 'a small town');
+  const character = _pickFresh(STORY_CHARACTERS, usedCharacters, 'a kind neighbor');
+
   try {
-    const data = await callAI(makePrompt(next, topics, si, memNote(mem), usedTopics));
+    const data = await callAI(makePrompt(next, topics, si, memNote(mem), usedTopics, setting, character));
+    data.setting = setting;
+    data.character = character;
     data.n = next; data.lbl = lbl(next);
     LL.push(data); next++;
     document.getElementById('emailBtn').disabled=false;
@@ -621,7 +669,7 @@ async function openMem(){
 function closeMem(){ document.getElementById('modalBg').classList.remove('open'); }
 async function clearMem(){
   if(!confirm('Clear all memory? The AI will no longer avoid past lessons.')) return;
-  try{ await window.storage.delete(MKEY); }catch(e){}
+  try{ localStorage.removeItem(MKEY); }catch(e){}
   document.getElementById('memCount').textContent = '0';
   closeMem();
 }
